@@ -8,7 +8,7 @@ COMPILER = mpif90
 #LIBS = -L${FFTW_LINK} -lfftw3 -lm 
 LIBS =  -lfftw3 -lm 
 # source list for main program
-SOURCES =  heat.f90 
+SOURCES =  heat_2D.f90 
 		   
 test: $(SOURCES)
 		${COMPILER} -o heat $(FLAGS) $(SOURCES) $(LIBS)   

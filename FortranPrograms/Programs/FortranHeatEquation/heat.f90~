@@ -124,17 +124,15 @@
 
 	vna(1:Nx)=v(1:Nx,1)
 	PRINT *,'Starting timestepping'
-	DO it=1,Nt
-		DO ix=1,Nx
-			do iy=1,Ny
-				vna(ix,iy)=vna(ix,iy)/(1-dt*(kx2(ix)+ky2(iy)))
-			end do
+	DO n=1,Nt
+		DO i=1,Nx
+			vna(i)=vna(i)/(1-dt*kx(i)*kx(i))
 		END DO
 		PRINT *,'storing plot data ',n
-		time(it+1)=time(it)+dt
-		v=vna
-		CALL dfftw_execute_dft_(planbx,v,u)
-		u=u/REAL(Nx*Ny,KIND(0d0))	! normalize
+		time(n+1)=time(n)+dt
+		v(1:Nx,n+1)=vna(1:Nx)
+		CALL dfftw_execute_dft_(planbx,v(1:Nx,n+1),u(1:Nx,n+1))
+		u(1:Nx,n+1)=u(1:Nx,n+1)/REAL(Nx,KIND(0d0))	! normalize
 	END DO
 	PRINT *,'Finished time stepping'
 	CALL system_clock(finish,count_rate)
@@ -145,20 +143,20 @@
 	name_config = 'u.dat' 
 	OPEN(unit=11,FILE=name_config,status="UNKNOWN") 	
 	REWIND(11)
-	DO iy=1,Ny
-		DO ix=1,Nx
-			WRITE(11,*) REAL(u(ix,iy))
+	DO j=1,1+Nt
+		DO i=1,Nx
+			WRITE(11,*) REAL(u(i,j))
 		END DO
 	END DO
 	CLOSE(11)
 		
-	!name_config = 'tdata.dat' 
-	!OPEN(unit=11,FILE=name_config,status="UNKNOWN") 	
-	!REWIND(11)
-	!DO j=1,1+Nt
-	!	WRITE(11,*) time(j)
-	!END DO
-	!CLOSE(11)
+	name_config = 'tdata.dat' 
+	OPEN(unit=11,FILE=name_config,status="UNKNOWN") 	
+	REWIND(11)
+	DO j=1,1+Nt
+		WRITE(11,*) time(j)
+	END DO
+	CLOSE(11)
 
 	name_config = 'xcoord.dat' 
 	OPEN(unit=11,FILE=name_config,status="UNKNOWN") 	
@@ -168,23 +166,14 @@
 	END DO
 	CLOSE(11)
 
-	name_config = 'ycoord.dat' 
-	OPEN(unit=11,FILE=name_config,status="UNKNOWN") 	
-	REWIND(11)
-	DO iy=1,Ny
-		WRITE(11,*) y(iy)
-	END DO
-	CLOSE(11)
-
-
 	PRINT *,'Saved data'
-	DEALLOCATE(kx,ky,x,y,u,v,&
-   			time,vna,fftfxy,fftbxy,&
+	DEALLOCATE(kx,x,u,v,&
+   			time,vna,fftfx,fftbx,&
    			stat=AllocateStatus)
    	IF (AllocateStatus .ne. 0) STOP 
 	
-	CALL dfftw_destroy_plan(planbxy)
-	CALL dfftw_destroy_plan(planfxy)
+	CALL dfftw_destroy_plan(planbx)
+	CALL dfftw_destroy_plan(planfx)
 	CALL dfftw_cleanup()
 	PRINT *,'Program execution complete'
 	END PROGRAM main
